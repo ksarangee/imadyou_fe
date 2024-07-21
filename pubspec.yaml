@@ -71,6 +71,10 @@ flutter:
     - assets/images/menu3_bg.png
     - assets/images/how_bg.png
     - assets/images/how_tag.png
+    - assets/images/desk.png
+    - assets/images/see_slide_bg.png
+    - assets/images/window12.png
+    - assets/images/window3.png
   # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg

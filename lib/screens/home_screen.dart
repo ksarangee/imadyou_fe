@@ -36,19 +36,19 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => IMissYouDetailPage()),
+          MaterialPageRoute(builder: (context) => const IMissYouDetailPage()),
         );
         break;
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HowAreYouDetailPage()),
+          MaterialPageRoute(builder: (context) => const HowAreYouDetailPage()),
         );
         break;
       case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ISeeYouDetailPage()),
+          MaterialPageRoute(builder: (context) => const ISeeYouDetailPage()),
         );
         break;
     }
