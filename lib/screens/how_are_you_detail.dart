@@ -77,8 +77,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     int number = nameToNumber[circleName] ?? 0;
     print('Fetching entries for $circleName (number: $number)');
 
-    final response =
-        await http.get(Uri.parse('http://3.38.96.220/how/$number'));
+    final response = await http.get(Uri.parse('http://3.38.95.45/how/$number'));
 
     print('Response status: ${response.statusCode}');
     print('Response body: ${response.body}');
@@ -106,7 +105,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     print('Updating entry for number $number: ${entry.statusPK}');
 
     final response = await http.post(
-      Uri.parse('http://3.38.96.220/how/$number/update/${entry.statusPK}'),
+      Uri.parse('http://3.38.95.45/how/$number/update/${entry.statusPK}'),
       body: json.encode({
         'startDate': entry.startDate,
         'endDate': entry.endDate,
@@ -136,7 +135,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     print('Adding new entry for number $number');
 
     final response = await http.post(
-      Uri.parse('http://3.38.96.220/how/$number/add'),
+      Uri.parse('http://3.38.95.45/how/$number/add'),
       body: json.encode({
         'startDate': entry.startDate,
         'endDate': entry.endDate,
@@ -156,9 +155,14 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
       print('Entry added successfully');
       // 새로운 데이터 가져오기
       await _fetchEntries(numberToName[number] ?? '');
+      setState(() {});
     } else {
       // 오류 처리
       print('Failed to add entry');
+      // 오류 메시지 표시
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add entry. Please try again.')),
+      );
     }
   }
 
@@ -197,15 +201,18 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                         child: ListView.builder(
                           itemCount: _serverEntries.length,
                           itemBuilder: (context, index) {
-                            return _buildEntry(_serverEntries[index],
-                                (updatedEntry) {
-                              setState(() {
-                                _serverEntries[index] = updatedEntry;
-                              });
-                              // 수정된 근황 서버에 업데이트
-                              _updateEntry(
-                                  nameToNumber[circleName] ?? 0, updatedEntry);
-                            });
+                            return _buildEntry(
+                              _serverEntries[index],
+                              (updatedEntry) {
+                                setState(() {
+                                  _serverEntries[index] = updatedEntry;
+                                });
+                                // 수정된 근황 서버에 업데이트
+                                _updateEntry(nameToNumber[circleName] ?? 0,
+                                    updatedEntry);
+                              },
+                              circleName, // circleName 전달
+                            );
                           },
                         ),
                       ),
@@ -218,10 +225,12 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                             onPressed: () {
                               setState(() {
                                 _serverEntries.add(Entry(
-                                    startDate: "",
-                                    endDate: "",
-                                    content: "",
-                                    isEditing: true));
+                                  startDate: "",
+                                  endDate: "",
+                                  content: "",
+                                  isEditing: true,
+                                  isNew: true, //새 항목임을 표시
+                                ));
                               });
                             },
                           ),
@@ -238,7 +247,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     });
   }
 
-  Widget _buildEntry(Entry entry, Function(Entry) onUpdate) {
+  Widget _buildEntry(Entry entry, Function(Entry) onUpdate, String circleName) {
     // KAIST 몰입캠프 참여 정보는 수정 불가능하도록 처리
     bool isKAISTEntry = entry.startDate == "24.06.27" &&
         entry.endDate == "24.07.28" &&
@@ -393,7 +402,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
               if (!isKAISTEntry) // KAIST 몰입캠프 참여 정보가 아닌 경우에만 수정 버튼 표시
                 IconButton(
                   icon: Icon(entry.isEditing ? Icons.check : Icons.edit),
-                  onPressed: () {
+                  onPressed: () async {
                     setState(() {
                       if (entry.isEditing) {
                         if (entry.startDate.isEmpty) {
@@ -403,6 +412,14 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                         if (entry.endDate.isEmpty) {
                           entry.endDate = "현재";
                         }
+                        // 새 항목이면 추가, 기존 항목이면 수정
+                        if (entry.isNew) {
+                          _addEntry(nameToNumber[circleName] ?? 0, entry);
+                          entry.isNew = false;
+                        } else {
+                          await _updateEntry(nameToNumber[circleName] ?? 0, entry);
+                        }
+                        entry.isNew = false; // 저장 후에는 더 이상 새 항목이 아님
                       }
                       entry.isEditing = !entry.isEditing;
                       onUpdate(entry);
@@ -556,6 +573,7 @@ class Entry {
   String content;
   bool isEditing;
   int? statusPK; // 서버에서 받아온 근황 PK 필드
+  bool isNew;
 
   Entry({
     required this.startDate,
@@ -563,5 +581,6 @@ class Entry {
     required this.content,
     this.isEditing = false,
     this.statusPK,
+    this.isNew = false,
   });
 }

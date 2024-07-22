@@ -98,7 +98,7 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage>
 
   // 서버에서 주차별 데이터 가져오기
   Future<void> _fetchGalleryData() async {
-    final url = 'http://3.38.96.220/gallery/${_selectedWeek[0]}';
+    final url = 'http://3.38.95.45/gallery/${_selectedWeek[0]}';
     print('Sending request to: $url');
 
     try {
@@ -108,7 +108,8 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage>
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> galleryData = json.decode(response.body);
+        final List<dynamic> galleryData =
+            json.decode(utf8.decode(response.bodyBytes));
 
         // 필요한 데이터만 저장
         setState(() {

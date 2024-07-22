@@ -22,7 +22,7 @@ class LoginPage extends StatelessWidget {
       print('Request body: $requestBody');
 
       final response = await client.post(
-        Uri.parse('http://3.38.96.220/login'),
+        Uri.parse('http://3.38.95.45/login'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
