@@ -42,6 +42,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     '재현',
     '종민',
   ];
+  String currentUserName = '';
 
   @override
   void initState() {
@@ -61,6 +62,14 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
         name: _circleNames[i],
       ));
     }
+    _getCurrentUserName();
+  }
+
+  // 현재 로그인한 사용자의 이름을 가져오는 함수
+  void _getCurrentUserName() {
+    setState(() {
+      currentUserName = MyApp.currentUserName;
+    });
   }
 
   @override
@@ -80,19 +89,31 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     final response = await http.get(Uri.parse('http://3.38.95.45/how/$number'));
 
     print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    print('Response body: ${utf8.decode(response.bodyBytes)}');
 
     if (response.statusCode == 200) {
-      List<dynamic> data = json.decode(response.body);
+      List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
       setState(() {
         _serverEntries = data
             .map((item) => Entry(
-                  startDate: item['startDate'],
-                  endDate: item['endDate'],
-                  content: item['status_content'],
-                  statusPK: item['status_PK'],
+                  startDate: item['start_date'],
+                  endDate: item['end_date'],
+                  content: item['content'],
+                  statusPK: item['_id'],
+                  userNum: number,
                 ))
             .toList();
+
+        // KAIST 몰입캠프 참여 정보 추가
+        _serverEntries.insert(
+            0,
+            Entry(
+              startDate: "24.06.27",
+              endDate: "24.07.28",
+              content: "KAIST 몰입캠프 참여 [3분반]",
+              isEditing: false,
+              statusPK: '-1', // 특별한 값을 사용하여 고정 항목임을 표시
+            ));
       });
     } else {
       // 오류 처리
@@ -104,13 +125,13 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
   Future<void> _updateEntry(int number, Entry entry) async {
     print('Updating entry for number $number: ${entry.statusPK}');
 
-    final response = await http.post(
+    final response = await http.put(
       Uri.parse('http://3.38.95.45/how/$number/update/${entry.statusPK}'),
       body: json.encode({
-        'startDate': entry.startDate,
-        'endDate': entry.endDate,
-        'status_content': entry.content,
-        'status_PK': entry.statusPK,
+        'start_date': entry.startDate,
+        'end_date': entry.endDate,
+        'content': entry.content,
+        '_id': entry.statusPK,
       }),
       headers: {
         'Content-Type': 'application/json',
@@ -119,7 +140,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     );
 
     print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    print('Response body: ${utf8.decode(response.bodyBytes)}');
 
     if (response.statusCode == 200) {
       // 수정 성공
@@ -137,9 +158,9 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     final response = await http.post(
       Uri.parse('http://3.38.95.45/how/$number/add'),
       body: json.encode({
-        'startDate': entry.startDate,
-        'endDate': entry.endDate,
-        'status_content': entry.content,
+        'start_date': entry.startDate,
+        'end_date': entry.endDate,
+        'content': entry.content,
       }),
       headers: {
         'Content-Type': 'application/json',
@@ -148,25 +169,31 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     );
 
     print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    print('Response body: ${utf8.decode(response.bodyBytes)}');
 
     if (response.statusCode == 200) {
       // 추가 성공
       print('Entry added successfully');
       // 새로운 데이터 가져오기
-      await _fetchEntries(numberToName[number] ?? '');
-      setState(() {});
+      String circleName = numberToName[number] ?? 'Unknown';
+      // 성빼고 name to number하기
+      if (circleName.length > 1) {
+        circleName = circleName.substring(1);
+      }
+      print('Fetching updated entries for $circleName (number: $number)');
+      await _fetchEntries(circleName);
     } else {
       // 오류 처리
       print('Failed to add entry');
-      // 오류 메시지 표시
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add entry. Please try again.')),
-      );
     }
   }
 
   void _showPopup(BuildContext context, String circleName) {
+    int number = nameToNumber[circleName] ?? 0;
+
+    //현재 사용자와 선택된 이미지의 이름이 일치하는지 확인
+    bool isCurrentUser = currentUserName == circleName;
+
     // 팝업을 표시하기 전에 서버에서 데이터를 가져옴
     _fetchEntries(circleName).then((_) {
       showDialog(
@@ -201,41 +228,35 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                         child: ListView.builder(
                           itemCount: _serverEntries.length,
                           itemBuilder: (context, index) {
-                            return _buildEntry(
-                              _serverEntries[index],
-                              (updatedEntry) {
-                                setState(() {
-                                  _serverEntries[index] = updatedEntry;
-                                });
-                                // 수정된 근황 서버에 업데이트
-                                _updateEntry(nameToNumber[circleName] ?? 0,
-                                    updatedEntry);
-                              },
-                              circleName, // circleName 전달
-                            );
+                            return _buildEntry(_serverEntries[index],
+                                (updatedEntry) {
+                              setState(() {
+                                _serverEntries[index] = updatedEntry;
+                              });
+                              _updateEntry(number, updatedEntry);
+                            }, number, isCurrentUser);
                           },
                         ),
                       ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: () {
-                              setState(() {
-                                _serverEntries.add(Entry(
-                                  startDate: "",
-                                  endDate: "",
-                                  content: "",
-                                  isEditing: true,
-                                  isNew: true, //새 항목임을 표시
-                                ));
-                              });
-                            },
+                      if (isCurrentUser)
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: IconButton(
+                              icon: const Icon(Icons.add),
+                              onPressed: () {
+                                setState(() {
+                                  _serverEntries.add(Entry(
+                                      startDate: "",
+                                      endDate: "",
+                                      content: "",
+                                      isEditing: true));
+                                });
+                              },
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -247,11 +268,15 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     });
   }
 
-  Widget _buildEntry(Entry entry, Function(Entry) onUpdate, String circleName) {
+  Widget _buildEntry(
+      Entry entry, Function(Entry) onUpdate, int number, bool isCurrentUser) {
     // KAIST 몰입캠프 참여 정보는 수정 불가능하도록 처리
     bool isKAISTEntry = entry.startDate == "24.06.27" &&
         entry.endDate == "24.07.28" &&
         entry.content == "KAIST 몰입캠프 참여 [3분반]";
+
+    bool isNewEntry =
+        entry.statusPK == null || entry.statusPK == '-1'; // 새 Entry인지 확인
 
     return StatefulBuilder(
       builder: (context, setState) {
@@ -399,7 +424,8 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                       )
                     : Text(entry.content, style: TextStyle(fontSize: 17)),
               ),
-              if (!isKAISTEntry) // KAIST 몰입캠프 참여 정보가 아닌 경우에만 수정 버튼 표시
+              if (!isKAISTEntry &&
+                  isCurrentUser) // KAIST 몰입캠프 참여 정보가 아닌 경우에만 수정 버튼 표시
                 IconButton(
                   icon: Icon(entry.isEditing ? Icons.check : Icons.edit),
                   onPressed: () async {
@@ -412,18 +438,26 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                         if (entry.endDate.isEmpty) {
                           entry.endDate = "현재";
                         }
-                        // 새 항목이면 추가, 기존 항목이면 수정
-                        if (entry.isNew) {
-                          _addEntry(nameToNumber[circleName] ?? 0, entry);
-                          entry.isNew = false;
-                        } else {
-                          await _updateEntry(nameToNumber[circleName] ?? 0, entry);
-                        }
-                        entry.isNew = false; // 저장 후에는 더 이상 새 항목이 아님
                       }
                       entry.isEditing = !entry.isEditing;
-                      onUpdate(entry);
                     });
+
+                    if (!entry.isEditing) {
+                      if (isNewEntry) {
+                        // 새 Entry를 추가
+                        await _addEntry(number, entry);
+                      } else {
+                        // 기존 Entry를 업데이트
+                        await _updateEntry(number, entry);
+                      }
+                      // 데이터 새로고침
+                      String circleName = numberToName[number] ?? 'Unknown';
+                      // 성빼고 name to number하기
+                      if (circleName.length > 1) {
+                        circleName = circleName.substring(1);
+                      }
+                      await _fetchEntries(circleName);
+                    }
                   },
                 ),
             ],
@@ -572,8 +606,8 @@ class Entry {
   String endDate;
   String content;
   bool isEditing;
-  int? statusPK; // 서버에서 받아온 근황 PK 필드
-  bool isNew;
+  String? statusPK; // 서버에서 받아온 근황 PK 필드
+  int? userNum;
 
   Entry({
     required this.startDate,
@@ -581,6 +615,6 @@ class Entry {
     required this.content,
     this.isEditing = false,
     this.statusPK,
-    this.isNew = false,
+    this.userNum,
   });
 }

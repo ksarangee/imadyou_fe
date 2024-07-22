@@ -10,6 +10,7 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   static String? accessToken; // 전역 변수 선언
+  static String currentUserName = '';
 
   @override
   Widget build(BuildContext context) {
