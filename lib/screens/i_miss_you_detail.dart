@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:http/http.dart' as http; // HTTP 요청 패키지
+
 
 class IMissYouDetailPage extends StatefulWidget {
   const IMissYouDetailPage({super.key});
@@ -12,6 +16,35 @@ class IMissYouDetailPage extends StatefulWidget {
 class _IMissYouDetailPageState extends State<IMissYouDetailPage> {
   final TextEditingController _controller = TextEditingController();
   final List<String> _messages = [];
+
+  late WebSocketChannel _channel;
+
+  @override
+  void initState()
+  {
+    super.initState();
+    final url = "ws://127.0.0.1:8000/chat";
+
+    _channel = IOWebSocketChannel.connect(url);
+    _fetchChatHistory();
+
+  }
+
+  void _fetchChatHistory() async {
+    final response = await http.get(Uri.parse('http://your-server-address/chat'));
+    if (response.statusCode == 200) {
+      List<dynamic> chatHistory = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        _messages.addAll(
+          chatHistory.map((msg) => '${msg['user_name']}: ${msg['message']}').toList(),
+        );
+      });
+    } else {
+      throw Exception('Failed to load chat history');
+    }
+  }
+
+
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
@@ -68,6 +101,7 @@ class _IMissYouDetailPageState extends State<IMissYouDetailPage> {
               },
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(

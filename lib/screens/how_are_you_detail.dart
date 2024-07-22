@@ -417,7 +417,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                           _addEntry(nameToNumber[circleName] ?? 0, entry);
                           entry.isNew = false;
                         } else {
-                          await _updateEntry(nameToNumber[circleName] ?? 0, entry);
+                          _updateEntry(nameToNumber[circleName] ?? 0, entry);
                         }
                         entry.isNew = false; // 저장 후에는 더 이상 새 항목이 아님
                       }
