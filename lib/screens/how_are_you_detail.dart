@@ -78,6 +78,12 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     super.dispose();
   }
 
+  void _removeEntry(String statusPK) {
+    setState(() {
+      _serverEntries.removeWhere((e) => e.statusPK == statusPK);
+    });
+  }
+
   // 서버에서 받아온 근황 데이터를 저장할 리스트
   List<Entry> _serverEntries = [];
 
@@ -188,6 +194,31 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     }
   }
 
+  //근황 삭제 함수
+  Future<void> _deleteEntry(int number, String statusPK) async {
+    print('Deleting entry for number $number: $statusPK');
+
+    final response = await http.delete(
+      Uri.parse('http://3.38.95.45/how/$number/delete/$statusPK'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${MyApp.accessToken}',
+      },
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${utf8.decode(response.bodyBytes)}');
+
+    if (response.statusCode == 200) {
+      // 삭제 성공
+      print('Entry deleted successfully');
+    } else {
+      // 오류 처리
+      print('Failed to delete entry');
+      // 오류 발생 시 사용자에게 알림을 표시할 수 있습니다.
+    }
+  }
+
   void _showPopup(BuildContext context, String circleName) {
     int number = nameToNumber[circleName] ?? 0;
 
@@ -200,89 +231,87 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
         context: context,
         barrierDismissible: false,
         builder: (context) {
-          return AlertDialog(
-            backgroundColor: Colors.transparent, // 배경 색상을 투명으로 설정
-            titlePadding: EdgeInsets.zero,
-            contentPadding: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.0), // 둥근 모서리 설정
-            ),
-            content: Container(
-              width: MediaQuery.of(context).size.width * 0.6,
-              height: MediaQuery.of(context).size.height * 0.5,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/cv_bg.png'),
-                  fit: BoxFit.cover,
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                backgroundColor: const Color(0xFFFFF8F1),
+                titlePadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.zero,
+                title: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 8.0, 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("How is $circleName?"),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(16.0),
-              ),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 8.0, 8.0, 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "How is $circleName?",
-                          style: TextStyle(
-                            color: Color(0xFF595959),
-                            fontWeight: FontWeight.w800,
-                            fontSize: 22,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _serverEntries.length,
-                      itemBuilder: (context, index) {
-                        return _buildEntry(_serverEntries[index],
-                            (updatedEntry) {
-                          setState(() {
-                            _serverEntries[index] = updatedEntry;
-                          });
-                          _updateEntry(number, updatedEntry);
-                        }, number, isCurrentUser);
-                      },
-                    ),
-                  ),
-                  if (isCurrentUser)
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: IconButton(
-                          icon: const Icon(Icons.add),
-                          onPressed: () {
-                            setState(() {
-                              _serverEntries.add(Entry(
-                                  startDate: "",
-                                  endDate: "",
-                                  content: "",
-                                  isEditing: true));
-                            });
+                content: Container(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _serverEntries.length,
+                          itemBuilder: (context, index) {
+                            return _buildEntry(
+                              _serverEntries[index],
+                              (updatedEntry) {
+                                setState(() {
+                                  _serverEntries[index] = updatedEntry;
+                                });
+                                _updateEntry(number, updatedEntry);
+                              },
+                              number,
+                              isCurrentUser,
+                              (statusPK) {
+                                setState(() {
+                                  _serverEntries.removeWhere(
+                                      (e) => e.statusPK == statusPK);
+                                });
+                                _removeEntry(statusPK);
+                              },
+                            );
                           },
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
+                      if (isCurrentUser)
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: IconButton(
+                              icon: const Icon(Icons.add),
+                              onPressed: () {
+                                setState(() {
+                                  _serverEntries.add(Entry(
+                                      startDate: "",
+                                      endDate: "",
+                                      content: "",
+                                      isEditing: true));
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         },
       );
     });
   }
 
-  Widget _buildEntry(
-      Entry entry, Function(Entry) onUpdate, int number, bool isCurrentUser) {
+  Widget _buildEntry(Entry entry, Function(Entry) onUpdate, int number,
+      bool isCurrentUser, Function(String) onDelete) {
     // KAIST 몰입캠프 참여 정보는 수정 불가능하도록 처리
     bool isKAISTEntry = entry.startDate == "24.06.27" &&
         entry.endDate == "24.07.28" &&
@@ -311,7 +340,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                     left: 10,
                     child: Row(
                       children: [
-                        //시작일 선택
+                        // 시작일 선택
                         GestureDetector(
                           onTap: entry.isEditing
                               ? () async {
@@ -365,7 +394,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                           ),
                         ),
                         Text(" ~ ", style: TextStyle(fontSize: 14)),
-                        //종료일 선택
+                        // 종료일 선택
                         GestureDetector(
                           onTap: entry.isEditing
                               ? () async {
@@ -438,40 +467,53 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                     : Text(entry.content, style: TextStyle(fontSize: 17)),
               ),
               if (!isKAISTEntry &&
-                  isCurrentUser) // KAIST 몰입캠프 참여 정보가 아닌 경우에만 수정 버튼 표시
-                IconButton(
-                  icon: Icon(entry.isEditing ? Icons.check : Icons.edit),
-                  onPressed: () async {
-                    setState(() {
-                      if (entry.isEditing) {
-                        if (entry.startDate.isEmpty) {
-                          entry.startDate =
-                              DateFormat('yy.MM.dd').format(DateTime.now());
-                        }
-                        if (entry.endDate.isEmpty) {
-                          entry.endDate = "현재";
-                        }
-                      }
-                      entry.isEditing = !entry.isEditing;
-                    });
+                  isCurrentUser) // KAIST 몰입캠프 참여 정보가 아닌 경우에만 수정 및 삭제 버튼 표시
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(entry.isEditing ? Icons.check : Icons.edit),
+                      onPressed: () async {
+                        setState(() {
+                          if (entry.isEditing) {
+                            if (entry.startDate.isEmpty) {
+                              entry.startDate =
+                                  DateFormat('yy.MM.dd').format(DateTime.now());
+                            }
+                            if (entry.endDate.isEmpty) {
+                              entry.endDate = "현재";
+                            }
+                          }
+                          entry.isEditing = !entry.isEditing;
+                        });
 
-                    if (!entry.isEditing) {
-                      if (isNewEntry) {
-                        // 새 Entry를 추가
-                        await _addEntry(number, entry);
-                      } else {
-                        // 기존 Entry를 업데이트
-                        await _updateEntry(number, entry);
-                      }
-                      // 데이터 새로고침
-                      String circleName = numberToName[number] ?? 'Unknown';
-                      // 성빼고 name to number하기
-                      if (circleName.length > 1) {
-                        circleName = circleName.substring(1);
-                      }
-                      await _fetchEntries(circleName);
-                    }
-                  },
+                        if (!entry.isEditing) {
+                          if (isNewEntry) {
+                            // 새 Entry를 추가
+                            await _addEntry(number, entry);
+                          } else {
+                            // 기존 Entry를 업데이트
+                            await _updateEntry(number, entry);
+                          }
+                          // 데이터 새로고침
+                          String circleName = numberToName[number] ?? 'Unknown';
+                          // 성빼고 name to number하기
+                          if (circleName.length > 1) {
+                            circleName = circleName.substring(1);
+                          }
+                          await _fetchEntries(circleName);
+                        }
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () async {
+                        if (entry.statusPK != null) {
+                          await _deleteEntry(number, entry.statusPK!);
+                          onDelete(entry.statusPK!);
+                        }
+                      },
+                    ),
+                  ],
                 ),
             ],
           ),

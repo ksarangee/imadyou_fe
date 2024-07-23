@@ -11,6 +11,7 @@ class MyApp extends StatelessWidget {
 
   static String? accessToken; // 전역 변수 선언
   static String currentUserName = '';
+  static String currentUserFullName = '';
 
   @override
   Widget build(BuildContext context) {

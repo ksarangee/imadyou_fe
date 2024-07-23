@@ -34,6 +34,7 @@ class LoginPage extends StatelessWidget {
         MyApp.accessToken = responseData['access_token'];
         MyApp.currentUserName =
             userName.length > 1 ? userName.substring(1) : userName;
+        MyApp.currentUserFullName = userName;
 
         // 성공적인 응답만 로그로 출력
         print('Response status: ${response.statusCode}');
