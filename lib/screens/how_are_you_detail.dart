@@ -180,14 +180,14 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     if (response.statusCode == 200) {
       // 추가 성공
       print('Entry added successfully');
-      // 새로운 데이터 가져오기
-      String circleName = numberToName[number] ?? 'Unknown';
-      // 성빼고 name to number하기
-      if (circleName.length > 1) {
-        circleName = circleName.substring(1);
-      }
-      print('Fetching updated entries for $circleName (number: $number)');
-      await _fetchEntries(circleName);
+      // 서버 응답에서 새로 생성된 항목의 statusPK를 가져옵니다
+      final responseBody = json.decode(utf8.decode(response.bodyBytes));
+      final newStatusPK = responseBody['_id'];
+
+      setState(() {
+        // 새로 추가된 항목의 statusPK를 설정합니다
+        entry.statusPK = newStatusPK;
+      });
     } else {
       // 오류 처리
       print('Failed to add entry');
@@ -287,14 +287,20 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                             padding: const EdgeInsets.all(8.0),
                             child: IconButton(
                               icon: const Icon(Icons.add),
-                              onPressed: () {
+                              onPressed: () async {
+                                final newEntry = Entry(
+                                  startDate: "",
+                                  endDate: "",
+                                  content: "",
+                                  isEditing: true,
+                                  statusPK:
+                                      'temp_${DateTime.now().millisecondsSinceEpoch}',
+                                );
                                 setState(() {
-                                  _serverEntries.add(Entry(
-                                      startDate: "",
-                                      endDate: "",
-                                      content: "",
-                                      isEditing: true));
+                                  _serverEntries.add(newEntry);
                                 });
+                                // 새 항목을 서버에 추가합니다
+                                await _addEntry(number, newEntry);
                               },
                             ),
                           ),
@@ -507,9 +513,12 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                     IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () async {
-                        if (entry.statusPK != null) {
+                        if (entry.statusPK != null && entry.statusPK != '-1') {
                           await _deleteEntry(number, entry.statusPK!);
                           onDelete(entry.statusPK!);
+                        } else {
+                          // 새로 추가된 항목이지만 아직 서버에 저장되지 않은 경우
+                          onDelete('temp_${entry.hashCode}');
                         }
                       },
                     ),
