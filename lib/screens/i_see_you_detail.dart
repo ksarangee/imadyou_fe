@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart'; // url_launcher 패키지 임포트
@@ -14,14 +13,8 @@ class ISeeYouDetailPage extends StatefulWidget {
   _ISeeYouDetailPageState createState() => _ISeeYouDetailPageState();
 }
 
-class _ISeeYouDetailPageState extends State<ISeeYouDetailPage>
-    with SingleTickerProviderStateMixin {
+class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
   String _selectedWeek = '1주차';
-  bool _showSlidePanel = false;
-  String _slidePanelText = '';
-  bool _slideFromLeft = false;
-  late AnimationController _controller;
-  late Animation<Offset> _slideAnimation;
 
   // 서버에서 받아올 데이터를 위한 변수들
   String _imageUrl = '';
@@ -83,17 +76,7 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
     _fetchGalleryData(); // 데이터 가져오기
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   // 서버에서 주차별 데이터 가져오기
@@ -128,23 +111,93 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage>
   }
 
   void _onTextTap(String text, bool isLeftColumn) {
-    setState(() {
-      _slidePanelText = text;
-      _slideFromLeft = !isLeftColumn; // 반대쪽에서 슬라이드
-      _showSlidePanel = true;
-      _slideAnimation = Tween<Offset>(
-        begin: Offset(_slideFromLeft ? -1.0 : 1.0, 0.0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ));
-      _controller.forward(from: 0.0);
+    final project = _fetchProjectDataByName(text);
+    _updateSlidePanel(project);
 
-      // 선택한 프로젝트 데이터로 슬라이드 패널 업데이트
-      final project = _fetchProjectDataByName(text);
-      _updateSlidePanel(project);
-    });
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Color(0xFFFFF8F1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Container(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+                if (_imageUrl.isNotEmpty)
+                  Container(
+                    height: 150,
+                    color: Colors.grey[300],
+                    child: Image.network(_imageUrl, fit: BoxFit.cover),
+                  ),
+                SizedBox(height: 20),
+                Text(
+                  'Github:',
+                  style: TextStyle(
+                      color: Color(0xFF595959), fontWeight: FontWeight.w800),
+                ),
+                SizedBox(height: 8),
+                if (_githubLink.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => _launchUrl(_githubLink),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        _githubLink,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                  ),
+                SizedBox(height: 20),
+                Text(
+                  'Team:',
+                  style: TextStyle(
+                      color: Color(0xFF595959), fontWeight: FontWeight.w800),
+                ),
+                SizedBox(height: 8),
+                Text(
+                    style: TextStyle(
+                      color: Color(0xFF595959),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    _teamMembers.join(', ')),
+                SizedBox(height: 20),
+                Text(
+                  'Project Overview:',
+                  style: TextStyle(
+                      color: Color(0xFF595959), fontWeight: FontWeight.w800),
+                ),
+                SizedBox(height: 8),
+                Text(
+                    style: TextStyle(
+                      color: Color(0xFF595959),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    _projectOverview),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // 프로젝트 이름으로 데이터를 찾는 함수
@@ -168,14 +221,6 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage>
           .toList()
           .cast<String>(); // List<String> 타입으로 캐스팅
       _projectOverview = projectData['introduction'];
-    });
-  }
-
-  void _closeSlidePanel() {
-    _controller.reverse().then((_) {
-      setState(() {
-        _showSlidePanel = false;
-      });
     });
   }
 
@@ -234,185 +279,6 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage>
               ),
             ],
           ),
-          if (_showSlidePanel)
-            Positioned.fill(
-              child: RawGestureDetector(
-                gestures: {
-                  AllowMultipleGestureRecognizer:
-                      GestureRecognizerFactoryWithHandlers<
-                          AllowMultipleGestureRecognizer>(
-                    () => AllowMultipleGestureRecognizer(),
-                    (AllowMultipleGestureRecognizer instance) {
-                      instance
-                        ..onStart = (DragStartDetails details) {}
-                        ..onUpdate = (DragUpdateDetails details) {
-                          if ((_slideFromLeft && details.delta.dx < -10) ||
-                              (!_slideFromLeft && details.delta.dx > 10)) {
-                            _closeSlidePanel();
-                          }
-                        };
-                    },
-                  ),
-                },
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Align(
-                    alignment: _slideFromLeft
-                        ? Alignment.centerLeft
-                        : Alignment.centerRight,
-                    child: FractionallySizedBox(
-                      widthFactor: 0.6,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage('assets/images/see_slide_bg.png'),
-                            fit: BoxFit.cover,
-                          ),
-                          borderRadius: BorderRadius.horizontal(
-                            left: _slideFromLeft
-                                ? Radius.zero
-                                : Radius.circular(20),
-                            right: _slideFromLeft
-                                ? Radius.circular(20)
-                                : Radius.zero,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              spreadRadius: 2,
-                              blurRadius: 10,
-                              offset: Offset(_slideFromLeft ? 5 : -5, 0),
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(50, 120, 50, 24),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // 이미지 영역
-                                      Container(
-                                        width: 250,
-                                        height: 250,
-                                        color: Colors.grey[300],
-                                        child: _imageUrl.isNotEmpty
-                                            ? Image.network(_imageUrl,
-                                                fit: BoxFit.cover)
-                                            : null,
-                                      ),
-                                      SizedBox(width: 16),
-                                      // 깃헙 영역
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(height: 20),
-                                            Text(
-                                              'Github:',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            Container(
-                                              height: 80,
-                                              padding: EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white
-                                                    .withOpacity(0.6),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: _githubLink.isNotEmpty
-                                                  ? GestureDetector(
-                                                      onTap: () => _launchUrl(
-                                                          _githubLink),
-                                                      child: Text(
-                                                        _githubLink,
-                                                        style: TextStyle(
-                                                          decoration:
-                                                              TextDecoration
-                                                                  .underline,
-                                                          color: Colors.blue,
-                                                        ),
-                                                      ),
-                                                    )
-                                                  : null,
-                                            ),
-                                            SizedBox(height: 20),
-                                            // 팀원 영역
-                                            Text(
-                                              'Team:',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            Container(
-                                              height: 60,
-                                              padding: EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white
-                                                    .withOpacity(0.6),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                _teamMembers.join(', '),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 20),
-                                  // 프로젝트 소개 영역
-                                  Text(
-                                    'Project Overview:',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  SizedBox(height: 8),
-                                  Container(
-                                    height: 200, // Project Overview 영역 높이
-                                    padding: EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.6),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(_projectOverview),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Positioned(
-                              top: 0,
-                              bottom: 0,
-                              left: _slideFromLeft ? null : 0,
-                              right: _slideFromLeft ? 0 : null,
-                              child: Center(
-                                child: IconButton(
-                                  icon: Icon(
-                                    _slideFromLeft
-                                        ? Icons.chevron_left
-                                        : Icons.chevron_right,
-                                  ),
-                                  onPressed: _closeSlidePanel,
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -475,12 +341,5 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage>
         }),
       ),
     );
-  }
-}
-
-class AllowMultipleGestureRecognizer extends PanGestureRecognizer {
-  @override
-  void rejectGesture(int pointer) {
-    acceptGesture(pointer);
   }
 }
