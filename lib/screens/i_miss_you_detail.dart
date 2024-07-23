@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http; // HTTP 요청 패키지
+import 'dart:html' as html;
 
+import '../main.dart';
 
 class IMissYouDetailPage extends StatefulWidget {
   const IMissYouDetailPage({super.key});
@@ -16,40 +16,50 @@ class IMissYouDetailPage extends StatefulWidget {
 class _IMissYouDetailPageState extends State<IMissYouDetailPage> {
   final TextEditingController _controller = TextEditingController();
   final List<String> _messages = [];
-
-  late WebSocketChannel _channel;
+  late html.WebSocket _socket;
 
   @override
   void initState()
   {
     super.initState();
-    final url = "ws://127.0.0.1:8000/chat";
-
-    _channel = IOWebSocketChannel.connect(url);
-    _fetchChatHistory();
-
+    _connectWebSocket();
   }
 
-  void _fetchChatHistory() async {
-    final response = await http.get(Uri.parse('http://your-server-address/chat'));
-    if (response.statusCode == 200) {
-      List<dynamic> chatHistory = json.decode(utf8.decode(response.bodyBytes));
+
+
+  void _connectWebSocket() {
+    final userName = Uri.encodeComponent(MyApp.currentUserName);  // URL 인코딩
+    final url = "ws://3.38.95.45:80/chat/$userName";
+
+    // final url = "ws://localhost:8000/chat/$userName";
+    _socket = html.WebSocket(url);
+
+    // 헤더에 토큰을 포함하여 WebSocket 연결 설정
+    _socket.onOpen.listen((event) {
+      print('WebSocket connected');
+    });
+
+    _socket.onClose.listen((event) {
+      print('WebSocket closed');
+    });
+
+    _socket.onMessage.listen((event) {
       setState(() {
-        _messages.addAll(
-          chatHistory.map((msg) => '${msg['user_name']}: ${msg['message']}').toList(),
-        );
+        _messages.insert(0, event.data);
       });
-    } else {
-      throw Exception('Failed to load chat history');
-    }
-  }
+    });
 
+    _socket.onError.listen((event) {
+      print('WebSocket error: ${event.type}');
+    });
+  }
 
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
+      _socket.sendString(_controller.text);
       setState(() {
-        _messages.insert(0, _controller.text);
+        // _messages.insert(0, _controller.text);
         _controller.clear();
       });
     }
@@ -58,6 +68,7 @@ class _IMissYouDetailPageState extends State<IMissYouDetailPage> {
   @override
   void dispose() {
     _controller.dispose();
+    _socket.close();
     super.dispose();
   }
 
@@ -194,3 +205,5 @@ class BubblePainter extends CustomPainter {
     return false;
   }
 }
+
+
