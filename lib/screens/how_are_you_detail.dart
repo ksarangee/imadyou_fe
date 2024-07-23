@@ -200,68 +200,81 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
         context: context,
         barrierDismissible: false,
         builder: (context) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                backgroundColor: const Color(0xFFFFF8F1),
-                titlePadding: EdgeInsets.zero,
-                contentPadding: EdgeInsets.zero,
-                title: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 8.0, 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("How is $circleName?"),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
+          return AlertDialog(
+            backgroundColor: Colors.transparent, // 배경 색상을 투명으로 설정
+            titlePadding: EdgeInsets.zero,
+            contentPadding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0), // 둥근 모서리 설정
+            ),
+            content: Container(
+              width: MediaQuery.of(context).size.width * 0.6,
+              height: MediaQuery.of(context).size.height * 0.5,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/cv_bg.png'),
+                  fit: BoxFit.cover,
                 ),
-                content: Container(
-                  width: MediaQuery.of(context).size.width * 0.6,
-                  height: MediaQuery.of(context).size.height * 0.5,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: _serverEntries.length,
-                          itemBuilder: (context, index) {
-                            return _buildEntry(_serverEntries[index],
-                                (updatedEntry) {
-                              setState(() {
-                                _serverEntries[index] = updatedEntry;
-                              });
-                              _updateEntry(number, updatedEntry);
-                            }, number, isCurrentUser);
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16.0, 8.0, 8.0, 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "How is $circleName?",
+                          style: TextStyle(
+                            color: Color(0xFF595959),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 22,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _serverEntries.length,
+                      itemBuilder: (context, index) {
+                        return _buildEntry(_serverEntries[index],
+                            (updatedEntry) {
+                          setState(() {
+                            _serverEntries[index] = updatedEntry;
+                          });
+                          _updateEntry(number, updatedEntry);
+                        }, number, isCurrentUser);
+                      },
+                    ),
+                  ),
+                  if (isCurrentUser)
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            setState(() {
+                              _serverEntries.add(Entry(
+                                  startDate: "",
+                                  endDate: "",
+                                  content: "",
+                                  isEditing: true));
+                            });
                           },
                         ),
                       ),
-                      if (isCurrentUser)
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () {
-                                setState(() {
-                                  _serverEntries.add(Entry(
-                                      startDate: "",
-                                      endDate: "",
-                                      content: "",
-                                      isEditing: true));
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
+                    ),
+                ],
+              ),
+            ),
           );
         },
       );

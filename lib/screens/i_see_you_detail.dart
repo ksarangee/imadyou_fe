@@ -118,84 +118,98 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color(0xFFFFF8F1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          content: Container(
-            width: 300,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
+            backgroundColor: Colors.transparent,
+            contentPadding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            content: Container(
+              width: 300,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image:
+                      AssetImage('assets/images/see_pop_bg.png'), // 배경 이미지 설정
+                  fit: BoxFit.cover,
                 ),
-                if (_imageUrl.isNotEmpty)
-                  Container(
-                    height: 150,
-                    color: Colors.grey[300],
-                    child: Image.network(_imageUrl, fit: BoxFit.cover),
-                  ),
-                SizedBox(height: 20),
-                Text(
-                  'Github:',
-                  style: TextStyle(
-                      color: Color(0xFF595959), fontWeight: FontWeight.w800),
-                ),
-                SizedBox(height: 8),
-                if (_githubLink.isNotEmpty)
-                  GestureDetector(
-                    onTap: () => _launchUrl(_githubLink),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        _githubLink,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
-                          color: Colors.blue,
-                        ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0), // 내부 패딩 추가
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
                       ),
                     ),
-                  ),
-                SizedBox(height: 20),
-                Text(
-                  'Team:',
-                  style: TextStyle(
-                      color: Color(0xFF595959), fontWeight: FontWeight.w800),
-                ),
-                SizedBox(height: 8),
-                Text(
-                    style: TextStyle(
-                      color: Color(0xFF595959),
-                      fontWeight: FontWeight.bold,
+                    if (_imageUrl.isNotEmpty)
+                      Container(
+                        height: 150,
+                        color: Colors.grey[300],
+                        child: Image.network(_imageUrl, fit: BoxFit.cover),
+                      ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Github:',
+                      style: TextStyle(
+                          color: Color(0xFF595959),
+                          fontWeight: FontWeight.w800),
                     ),
-                    _teamMembers.join(', ')),
-                SizedBox(height: 20),
-                Text(
-                  'Project Overview:',
-                  style: TextStyle(
-                      color: Color(0xFF595959), fontWeight: FontWeight.w800),
-                ),
-                SizedBox(height: 8),
-                Text(
-                    style: TextStyle(
-                      color: Color(0xFF595959),
-                      fontWeight: FontWeight.bold,
+                    SizedBox(height: 8),
+                    if (_githubLink.isNotEmpty)
+                      GestureDetector(
+                        onTap: () => _launchUrl(_githubLink),
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            _githubLink,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ),
+                      ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Team:',
+                      style: TextStyle(
+                          color: Color(0xFF595959),
+                          fontWeight: FontWeight.w800),
                     ),
-                    _projectOverview),
-              ],
-            ),
-          ),
-        );
+                    SizedBox(height: 8),
+                    Text(
+                        style: TextStyle(
+                          color: Color(0xFF595959),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        _teamMembers.join(', ')),
+                    SizedBox(height: 20),
+                    Text(
+                      'Project Overview:',
+                      style: TextStyle(
+                          color: Color(0xFF595959),
+                          fontWeight: FontWeight.w800),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                        style: TextStyle(
+                          color: Color(0xFF595959),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        _projectOverview),
+                  ],
+                ),
+              ),
+            ));
       },
     );
   }
