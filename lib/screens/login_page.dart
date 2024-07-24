@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:imadyou/widgets/music_button.dart';
 import 'dart:convert';
 import '../main.dart';
 
@@ -14,45 +15,17 @@ class LoginPage extends StatefulWidget {
 
 
 class _LoginPageState extends State<LoginPage> {
-  late AudioPlayer player = AudioPlayer();
-  bool isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    player = AudioPlayer();
-    player.setReleaseMode(ReleaseMode.loop);
-  }
+    GlobalAudioPlayer.player.setReleaseMode(ReleaseMode.loop);
 
-  Future<void> _playBackgroundMusic() async {
-    try {
-      await player.setSource(AssetSource('audios/bg.mp3'));
-      await player.resume();
-      setState(() {
-        isPlaying = true;
-      });
-      print('Music is playing'); // 로그 추가
-    } catch (e) {
-      print('Error loading audio source: $e');
-    }
-  }
-
-  Future<void> _pauseBackgroundMusic() async {
-    try {
-      await player.pause();
-      setState(() {
-        isPlaying = false;
-      });
-      print('Music paused'); // 로그 추가
-    } catch (e) {
-      print('Error pausing audio: $e');
-    }
   }
 
 
   @override
   void dispose() {
-    player.dispose();
     super.dispose();
   }
 
@@ -365,18 +338,7 @@ class _LoginPageState extends State<LoginPage> {
           Positioned(
             top: 16,
             right: 16,
-            child: IconButton(
-              icon: Icon(isPlaying ? Icons.music_note : Icons.music_off),
-              onPressed: () async {
-                if (isPlaying) {
-                  await _pauseBackgroundMusic();
-                } else {
-                  await _playBackgroundMusic();
-                }
-              },
-              iconSize: 32,
-              color: Colors.black,
-            ),
+            child: MusicControlButton(),
           ),
         ],
 

@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:imadyou/screens/home_screen.dart';
 import 'screens/login_page.dart';
@@ -26,5 +27,30 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
       },
     );
+  }
+}
+
+
+class GlobalAudioPlayer {
+  static final AudioPlayer player = AudioPlayer();
+  static bool isPlaying = false;
+
+  static Future<void> playBackgroundMusic() async {
+    try {
+      await player.setSource(AssetSource('audios/bg.mp3'));
+      await player.resume();
+      isPlaying = true;
+    } catch (e) {
+      print('Error loading audio source: $e');
+    }
+  }
+
+  static Future<void> pauseBackgroundMusic() async {
+    try {
+      await player.pause();
+      isPlaying = false;
+    } catch (e) {
+      print('Error pausing audio: $e');
+    }
   }
 }
