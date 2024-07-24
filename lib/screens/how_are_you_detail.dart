@@ -47,22 +47,28 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
   @override
   void initState() {
     super.initState();
-    //애니메이션 컨트롤러 초기화랑 반복 설정
+    // 애니메이션 컨트롤러 초기화 및 반복 설정
     _controller = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat();
 
-    for (int i = 0; i < _circleNames.length; i++) {
-      _circles.add(Circle(
-        position:
-            Offset(_random.nextDouble() * 300, _random.nextDouble() * 600),
-        velocity: Offset((_random.nextDouble() * 4 - 2) * 1.6,
-            (_random.nextDouble() * 4 - 2) * 1.6),
-        name: _circleNames[i],
-      ));
-    }
-    _getCurrentUserName();
+    // 화면 크기 가져오기
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final screenHeight = MediaQuery.of(context).size.height;
+
+      for (int i = 0; i < _circleNames.length; i++) {
+        _circles.add(Circle(
+          position: Offset(_random.nextDouble() * (screenWidth - 90),
+              _random.nextDouble() * (screenHeight - 110)),
+          velocity: Offset((_random.nextDouble() * 4 - 2) * 1.6,
+              (_random.nextDouble() * 4 - 2) * 1.6),
+          name: _circleNames[i],
+        ));
+      }
+      _getCurrentUserName();
+    });
   }
 
   // 현재 로그인한 사용자의 이름을 가져오는 함수
@@ -547,14 +553,6 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
             ),
             child: Stack(
               children: [
-                Positioned(
-                  top: 50,
-                  left: MediaQuery.of(context).size.width / 2 - 100,
-                  child: const Text(
-                    "How is Everyone?",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ),
                 ..._circles.map((circle) {
                   return Positioned(
                     left: circle.position.dx,
@@ -620,7 +618,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     for (var circle in _circles) {
       Offset newPosition = circle.position + circle.velocity;
 
-      //화면 경계를 넘어가지 않도록 처리
+      // 화면 경계를 넘어가지 않도록 처리
       if (newPosition.dx <= 0) {
         circle.velocity = Offset(-circle.velocity.dx, circle.velocity.dy);
         newPosition = Offset(0, newPosition.dy);
@@ -637,18 +635,42 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
         newPosition = Offset(newPosition.dx, screenHeight - circleDiameter);
       }
 
-      //원들이 충돌했을 때
+      // 원들이 충돌했을 때
       for (var other in _circles) {
         if (circle != other) {
-          if ((newPosition - other.position).distance < circleDiameter) {
-            circle.velocity = Offset(-circle.velocity.dx, -circle.velocity.dy);
-            other.velocity = Offset(-other.velocity.dx, -other.velocity.dy);
+          final distance = (newPosition - other.position).distance;
+          if (distance < circleDiameter) {
+            // 벡터의 각도와 크기를 통해 충돌 벡터 계산
+            Offset collisionVector =
+                (newPosition - other.position) / distance; // 단위 벡터로 변환
+
+            // 벡터를 기준으로 속도를 반사시키기
+            circle.velocity = _reflect(circle.velocity, collisionVector);
+            other.velocity = _reflect(other.velocity, collisionVector);
+
+            // 충돌 후 위치 조정
+            double overlap = 0.5 * (circleDiameter - distance);
+            Offset adjustment = Offset(
+              overlap * collisionVector.dx,
+              overlap * collisionVector.dy,
+            );
+
+            newPosition += adjustment;
           }
         }
       }
 
       circle.position = newPosition;
     }
+  }
+
+  Offset _reflect(Offset velocity, Offset normal) {
+    // 반사 벡터 계산
+    double dotProduct = velocity.dx * normal.dx + velocity.dy * normal.dy;
+    return Offset(
+      velocity.dx - 2 * dotProduct * normal.dx,
+      velocity.dy - 2 * dotProduct * normal.dy,
+    );
   }
 }
 

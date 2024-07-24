@@ -73,6 +73,8 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
     '일상의 소설'
   ];
 
+  String? _selectedProjectName; //클릭된 텍스트
+
   @override
   void initState() {
     super.initState();
@@ -111,6 +113,10 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
   }
 
   void _onTextTap(String text, bool isLeftColumn) {
+    setState(() {
+      _selectedProjectName = text; // 클릭된 텍스트 저장
+    });
+
     final project = _fetchProjectDataByName(text);
     _updateSlidePanel(project);
 
@@ -250,7 +256,7 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFFF8F1),
+      backgroundColor: Color(0xFFEFF5F8),
       body: Stack(
         children: [
           // 배경 이미지 추가
@@ -267,7 +273,7 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
                 child: Center(
                   child: DropdownButton<String>(
                     value: _selectedWeek,
-                    dropdownColor: Color(0xFFFFF8F1),
+                    dropdownColor: Color(0xFFEFF5F8),
                     items: <String>['1주차', '2주차', '3주차'].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -328,23 +334,34 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(5, (index) {
+          final text = texts?[index];
+          final isSelected = text == _selectedProjectName;
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Stack(
               children: [
                 Image.asset('assets/images/desk.png'),
-                if (texts != null && texts.length > index)
+                if (text != null)
                   Positioned(
                     bottom: 8,
                     left: 16,
                     child: GestureDetector(
-                      onTap: () => _onTextTap(texts[index], isLeftColumn),
+                      onTap: () => _onTextTap(text, isLeftColumn),
                       child: Text(
-                        texts[index],
+                        text,
                         style: TextStyle(
                           color: Color(0xFF595959),
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
+                          shadows: isSelected
+                              ? [
+                                  Shadow(
+                                    blurRadius: 5.0,
+                                    color: Colors.black.withOpacity(0.5),
+                                    offset: Offset(0, 2),
+                                  )
+                                ]
+                              : [],
                         ),
                       ),
                     ),

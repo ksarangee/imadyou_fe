@@ -104,142 +104,158 @@ class _IMissYouDetailPageState extends State<IMissYouDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F1),
-      appBar: AppBar(
         backgroundColor: const Color(0xFFFFF8F1),
-        title: const Text(
-          "3분반의 담벼락",
-          style: TextStyle(color: Colors.black),
-          textAlign: TextAlign.center,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(56.0),
+          child: Container(
+            color: const Color(0xFFFFF8F1),
+            child: AppBar(
+              backgroundColor: Colors.transparent,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8F1),
+                ),
+              ),
+              centerTitle: true,
+              elevation: 0,
+            ),
+          ),
         ),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return Align(
-                  alignment: message.isFromCurrentUser
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    margin: EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: message.isFromCurrentUser ? 300 : 250,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: message.isFromCurrentUser
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.start,
-                      children: [
-                        if (!message.isFromCurrentUser)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 10, bottom: 5),
-                            child: Text(
-                              message.sender,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ),
-                        CustomPaint(
-                          painter: BubblePainter(message.isFromCurrentUser),
-                          child: Container(
-                            constraints: BoxConstraints(
-                                maxWidth:
-                                    MediaQuery.of(context).size.width * 0.7),
-                            padding: EdgeInsets.fromLTRB(
-                                message.isFromCurrentUser ? 10 : 20,
-                                10,
-                                message.isFromCurrentUser ? 20 : 10,
-                                10),
-                            child: Text(
-                              message.content,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(
-                            top: 5,
-                            right: message.isFromCurrentUser ? 10 : 0,
-                            left: message.isFromCurrentUser ? 0 : 10,
-                          ),
-                          child: Text(
-                            message.timestamp,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+        body: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("assets/images/chat_bg.png"),
+              fit: BoxFit.cover,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.6,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: Colors.black, width: 1),
-                    ),
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: '메시지를 입력하세요',
-                        border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  reverse: true,
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    return Align(
+                      alignment: message.isFromCurrentUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        margin: EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: message.isFromCurrentUser ? 300 : 250,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: message.isFromCurrentUser
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          children: [
+                            if (!message.isFromCurrentUser)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 10, bottom: 5),
+                                child: Text(
+                                  message.sender,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            CustomPaint(
+                              painter: BubblePainter(message.isFromCurrentUser),
+                              child: Container(
+                                constraints: BoxConstraints(
+                                    maxWidth:
+                                        MediaQuery.of(context).size.width *
+                                            0.7),
+                                padding: EdgeInsets.fromLTRB(
+                                    message.isFromCurrentUser ? 10 : 20,
+                                    10,
+                                    message.isFromCurrentUser ? 20 : 10,
+                                    10),
+                                child: Text(
+                                  message.content,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top: 5,
+                                right: message.isFromCurrentUser ? 10 : 0,
+                                left: message.isFromCurrentUser ? 0 : 10,
+                              ),
+                              child: Text(
+                                message.timestamp,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.black45,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
+                    );
+                  },
                 ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFF6E6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        side: const BorderSide(color: Colors.black, width: 1),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.6,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(color: Colors.black, width: 1),
+                        ),
+                        child: TextField(
+                          controller: _controller,
+                          decoration: const InputDecoration(
+                            hintText: '메시지를 입력하세요',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                          ),
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
-                    onPressed: _sendMessage,
-                    child: const Text(
-                      '전송',
-                      style: TextStyle(color: Colors.black),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFF6E6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                            side:
+                                const BorderSide(color: Colors.black, width: 1),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        onPressed: _sendMessage,
+                        child: const Text(
+                          '전송',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        ));
   }
 }
 
