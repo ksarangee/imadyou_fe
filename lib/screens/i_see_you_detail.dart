@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart'; // url_launcher 패키지 임포트
 import 'package:imadyou/utils/number_name.dart'; // 번호-이름 매핑 파일을 임포트
+import 'package:imadyou/widgets/clock_widget.dart';
+import 'dart:math';
 
 class ISeeYouDetailPage extends StatefulWidget {
   const ISeeYouDetailPage({super.key});
@@ -15,6 +17,7 @@ class ISeeYouDetailPage extends StatefulWidget {
 
 class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
   String _selectedWeek = '1주차';
+  double _overlayOpacity = 0.0;
 
   // 서버에서 받아올 데이터를 위한 변수들
   String _imageUrl = '';
@@ -299,11 +302,34 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
                 child: Row(
                   children: [
                     _buildDeskColumn(_getWeekTexts(true), true),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.topCenter, // 위쪽으로 정렬
+                        child: ClockWidget(
+                          onAngleChanged: (angle) {
+                            setState(() {
+                              _overlayOpacity = (angle + pi) / (2 * pi);
+                            });
+                          },
+                        ),
+                      ),
+                    ),
                     _buildDeskColumn(_getWeekTexts(false), false),
                   ],
                 ),
               ),
             ],
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _overlayOpacity * 0.3, //최대 불투명도
+                duration: Duration(milliseconds: 300),
+                child: Container(
+                  color: Colors.black,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -337,6 +363,7 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
 
   Widget _buildDeskColumn(List<String>? texts, bool isLeftColumn) {
     return Expanded(
+      flex: 2,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(5, (index) {
@@ -350,7 +377,8 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
                 if (text != null)
                   Positioned(
                       bottom: 8,
-                      left: 16,
+                      left: isLeftColumn ? 16 : null,
+                      right: isLeftColumn ? null : 16,
                       child: MouseRegion(
                         onEnter: (_) => setState(() {
                           if (_selectedProjectName != text) {
