@@ -74,6 +74,7 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
   ];
 
   String? _selectedProjectName; //클릭된 텍스트
+  String? _hoveredProjectName;
 
   @override
   void initState() {
@@ -115,6 +116,7 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
   void _onTextTap(String text, bool isLeftColumn) {
     setState(() {
       _selectedProjectName = text; // 클릭된 텍스트 저장
+      _hoveredProjectName = text; // 클릭된 텍스트가 현재 호버된 텍스트가 되도록 설정
     });
 
     final project = _fetchProjectDataByName(text);
@@ -150,6 +152,10 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
                       child: IconButton(
                         icon: Icon(Icons.close),
                         onPressed: () {
+                          setState(() {
+                            _selectedProjectName = null; // 팝업창 닫을 때 그림자 해제
+                            _hoveredProjectName = null; // 호버 상태도 해제
+                          });
                           Navigator.of(context).pop();
                         },
                       ),
@@ -343,29 +349,43 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
                 Image.asset('assets/images/desk.png'),
                 if (text != null)
                   Positioned(
-                    bottom: 8,
-                    left: 16,
-                    child: GestureDetector(
-                      onTap: () => _onTextTap(text, isLeftColumn),
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          color: Color(0xFF595959),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          shadows: isSelected
-                              ? [
-                                  Shadow(
-                                    blurRadius: 5.0,
-                                    color: Colors.black.withOpacity(0.5),
-                                    offset: Offset(0, 2),
-                                  )
-                                ]
-                              : [],
+                      bottom: 8,
+                      left: 16,
+                      child: MouseRegion(
+                        onEnter: (_) => setState(() {
+                          if (_selectedProjectName != text) {
+                            // 선택된 텍스트가 아닌 경우에만 호버 처리
+                            _hoveredProjectName = text;
+                          }
+                        }),
+                        onExit: (_) => setState(() {
+                          if (_selectedProjectName != text) {
+                            // 선택된 텍스트가 아닌 경우에만 호버 해제
+                            _hoveredProjectName = null;
+                          }
+                        }),
+                        child: GestureDetector(
+                          onTap: () => _onTextTap(text, isLeftColumn),
+                          child: Text(
+                            text,
+                            style: TextStyle(
+                              color: Color(0xFF595959),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              shadows: (text == _selectedProjectName ||
+                                      text == _hoveredProjectName)
+                                  ? [
+                                      Shadow(
+                                        blurRadius: 5.0,
+                                        color: Colors.black.withOpacity(0.5),
+                                        offset: Offset(0, 2),
+                                      )
+                                    ]
+                                  : [],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
+                      )),
               ],
             ),
           );
