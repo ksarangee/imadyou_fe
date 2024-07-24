@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/menu_item.dart';
 import '../widgets/menu_page.dart';
+import '../widgets/music_button.dart';
 import '../widgets/page_indicator.dart';
 import '../widgets/scale_arrow_button.dart';
 import '../screens/i_miss_you_detail.dart';
@@ -165,6 +166,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: _navigateToDetailPage,
               ),
             ),
+          ),
+
+          Positioned(
+            top: 16,
+            right: 16,
+            child: MusicControlButton(), // 공통 재생 버튼 위젯 사용
           ),
         ],
       ),
