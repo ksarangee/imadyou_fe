@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'I Mad You',
       theme: ThemeData(
         useMaterial3: true,
       ),
@@ -29,7 +29,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 
 class GlobalAudioPlayer {
   static final AudioPlayer player = AudioPlayer();

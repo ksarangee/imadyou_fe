@@ -3,16 +3,43 @@ import 'dart:math';
 
 class ClockWidget extends StatefulWidget {
   final Function(double) onAngleChanged;
+  final String selectedWeek;
 
-  const ClockWidget({Key? key, required this.onAngleChanged}) : super(key: key);
+  const ClockWidget(
+      {Key? key, required this.onAngleChanged, required this.selectedWeek})
+      : super(key: key);
 
   @override
   _ClockWidgetState createState() => _ClockWidgetState();
 }
 
 class _ClockWidgetState extends State<ClockWidget> {
-  // 10시 30분 방향의 초기 각도 (315도, 10.5/12 * 2 * pi 라디안)
-  double _angle = (10.5 / 12) * 2 * pi;
+  late double _angle;
+  bool _isInitialLoad = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _setInitialAngle();
+  }
+
+  @override
+  void didUpdateWidget(ClockWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedWeek != widget.selectedWeek) {
+      _setInitialAngle();
+    }
+  }
+
+  void _setInitialAngle() {
+    setState(() {
+      if (widget.selectedWeek == '1주차') {
+        _angle = (10.5 / 12) * 2 * pi; // 10시 30분 방향
+      } else {
+        _angle = (11 / 12) * 2 * pi; // 11시 방향
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,14 +47,20 @@ class _ClockWidgetState extends State<ClockWidget> {
       width: 100, // 시계의 크기를 줄임
       height: 100, // 시계의 크기를 줄임
       child: GestureDetector(
-        onPanStart: (details) => _updateAngle(details.localPosition),
-        onPanUpdate: (details) => _updateAngle(details.localPosition),
+        onPanStart: (details) {
+          _isInitialLoad = false;
+          _updateAngle(details.localPosition);
+        },
+        onPanUpdate: (details) {
+          _isInitialLoad = false;
+          _updateAngle(details.localPosition);
+        },
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
             border:
-                Border.all(color: Color(0xFFB8B8B8), width: 5), // 테두리 두께와 색상 변경
+                Border.all(color: Color(0xFFB8B8B8), width: 7), // 테두리 두께와 색상 변경
           ),
           child: Stack(
             children: [
@@ -76,13 +109,15 @@ class _ClockWidgetState extends State<ClockWidget> {
     // 마우스 포인터의 각도 계산
     final pointerAngle = atan2(vector.dy, vector.dx);
 
-    // -π/2를 더해서 12시 방향을 0으로 맞춤
-    final correctedAngle = pointerAngle - (-pi / 2);
+    // 각도를 0에서 2π 범위로 조정
+    final correctedAngle = (pointerAngle + (2.5 * pi)) % (2 * pi);
 
     setState(() {
       _angle = correctedAngle;
     });
-    widget.onAngleChanged(correctedAngle);
+    if (!_isInitialLoad) {
+      widget.onAngleChanged(correctedAngle);
+    }
   }
 
   List<Widget> _buildClockMarks() {
