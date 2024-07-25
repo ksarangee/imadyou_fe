@@ -5,7 +5,6 @@ import 'package:imadyou/widgets/music_button.dart';
 import 'dart:convert';
 import '../main.dart';
 
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -13,16 +12,12 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
-
 class _LoginPageState extends State<LoginPage> {
-
   @override
   void initState() {
     super.initState();
     GlobalAudioPlayer.player.setReleaseMode(ReleaseMode.loop);
-
   }
-
 
   @override
   void dispose() {
@@ -82,6 +77,10 @@ class _LoginPageState extends State<LoginPage> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(20), // 여기서 숫자를 조절하여 둥근 정도를 변경할 수 있습니다
+          ),
           backgroundColor: const Color(0xFFFFF8F1),
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -100,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     // 2초 후 팝업을 닫고 다음 화면으로 이동
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 1), () {
       Navigator.of(context).pop(); // 팝업 닫기
       Navigator.pushReplacementNamed(context, '/home'); // 다음 화면으로 이동
     });
@@ -341,8 +340,6 @@ class _LoginPageState extends State<LoginPage> {
             child: MusicControlButton(),
           ),
         ],
-
-
       ),
     );
   }

@@ -239,28 +239,53 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
         builder: (context) {
           return StatefulBuilder(
             builder: (context, setState) {
-              return AlertDialog(
-                backgroundColor: const Color(0xFFFFF8F1),
-                titlePadding: EdgeInsets.zero,
-                contentPadding: EdgeInsets.zero,
-                title: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 8.0, 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("How is $circleName?"),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                content: Container(
+                child: Container(
                   width: MediaQuery.of(context).size.width * 0.6,
-                  height: MediaQuery.of(context).size.height * 0.5,
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/cv_bg.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                   child: Column(
                     children: [
+                      Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(25.0, 20.0, 24.0, 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                style: DefaultTextStyle.of(context).style,
+                                children: [
+                                  TextSpan(
+                                      text: circleName,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 26.0,
+                                          color: Color(0xFF3F3838))),
+                                  TextSpan(
+                                      text: "님은 어떻게 지내나요?",
+                                      style: TextStyle(
+                                          fontSize: 22.0,
+                                          color: Color(0xFF3F3838))),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ],
+                        ),
+                      ),
                       Expanded(
                         child: ListView.builder(
                           itemCount: _serverEntries.length,
@@ -290,7 +315,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                         Align(
                           alignment: Alignment.bottomRight,
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(24.0),
                             child: IconButton(
                               icon: const Icon(Icons.add),
                               onPressed: () async {
@@ -305,7 +330,6 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                                 setState(() {
                                   _serverEntries.add(newEntry);
                                 });
-                                // 새 항목을 서버에 추가합니다
                                 await _addEntry(number, newEntry);
                               },
                             ),
@@ -335,7 +359,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
     return StatefulBuilder(
       builder: (context, setState) {
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 25.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -476,7 +500,9 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                         decoration:
                             const InputDecoration(hintText: '근황을 적어주세요!'),
                       )
-                    : Text(entry.content, style: TextStyle(fontSize: 17)),
+                    : Text(entry.content,
+                        style:
+                            TextStyle(fontSize: 17, color: Color(0xFF3F3838))),
               ),
               if (!isKAISTEntry &&
                   isCurrentUser) // KAIST 몰입캠프 참여 정보가 아닌 경우에만 수정 및 삭제 버튼 표시

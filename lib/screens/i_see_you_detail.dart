@@ -1,10 +1,10 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart'; // url_launcher 패키지 임포트
 import 'package:imadyou/utils/number_name.dart'; // 번호-이름 매핑 파일을 임포트
+import 'package:imadyou/widgets/clock_widget.dart';
+import 'dart:math';
 
 class ISeeYouDetailPage extends StatefulWidget {
   const ISeeYouDetailPage({super.key});
@@ -15,6 +15,7 @@ class ISeeYouDetailPage extends StatefulWidget {
 
 class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
   String _selectedWeek = '1주차';
+  double _overlayOpacity = 0.0;
 
   // 서버에서 받아올 데이터를 위한 변수들
   String _imageUrl = '';
@@ -73,7 +74,7 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
     '일상의 소설'
   ];
 
-  String? _selectedProjectName; //클릭된 텍스트
+  String? _selectedProjectName; // 클릭된 텍스트
   String? _hoveredProjectName;
 
   @override
@@ -259,6 +260,33 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
     }
   }
 
+  void _onWeekChanged(String? newValue) {
+    setState(() {
+      _selectedWeek = newValue!;
+      _overlayOpacity = 0.0; // 초기 화면 밝게 설정
+      _fetchGalleryData();
+    });
+  }
+
+  void _updateOverlayOpacity(double angle) {
+    if (mounted) {
+      setState(() {
+        // 각도를 0에서 2π 범위로 정규화
+        double normalizedAngle = (angle % (2 * pi) + 2 * pi) % (2 * pi);
+
+        // 12시 방향 (0 또는 2π)을 가장 밝은 상태로, 6시 방향 (π)을 가장 어두운 상태로 설정
+        if (normalizedAngle > pi) {
+          _overlayOpacity = 2 - (normalizedAngle / pi);
+        } else {
+          _overlayOpacity = normalizedAngle / pi;
+        }
+
+        // 불투명도를 0에서 1 사이의 값으로 제한
+        _overlayOpacity = _overlayOpacity.clamp(0.0, 1.0);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -277,33 +305,93 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
                 child: Center(
-                  child: DropdownButton<String>(
-                    value: _selectedWeek,
-                    dropdownColor: Color(0xFFEFF5F8),
-                    items: <String>['1주차', '2주차', '3주차'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedWeek = newValue!;
-                        _fetchGalleryData(); // 주차 변경 시 데이터 다시 가져오기
-                      });
-                    },
+                  child: Container(
+                    width: 120, // 드롭다운 메뉴의 너비 설정
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedWeek,
+                      decoration: InputDecoration(
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      dropdownColor: Color(0xFFEFF5F8),
+                      items: <String>['1주차', '2주차', '3주차'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Container(
+                            width:
+                                double.infinity, // DropdownMenuItem의 전체 너비를 사용
+                            alignment: Alignment.center, // 내용을 중앙에 정렬
+                            child: Text(
+                              value,
+                              style: TextStyle(
+                                color: Color(0xFF595959),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        _onWeekChanged(newValue);
+                      },
+                      alignment: Alignment.center,
+                      icon:
+                          Icon(Icons.arrow_drop_down, color: Color(0xFF595959)),
+                      isExpanded: true, // 드롭다운 버튼을 컨테이너 너비에 맞춤
+                    ),
                   ),
                 ),
               ),
               Expanded(
                 child: Row(
                   children: [
-                    _buildDeskColumn(_getWeekTexts(true), true),
-                    _buildDeskColumn(_getWeekTexts(false), false),
+                    Spacer(flex: 1), // SizedBox 대신 Spacer 사용
+                    Expanded(
+                      flex: 3, // 책상 열의 너비 조정
+                      child: _buildDeskColumn(_getWeekTexts(true), true),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ClockWidget(
+                          selectedWeek: _selectedWeek,
+                          onAngleChanged: (angle) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _updateOverlayOpacity(angle);
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3, // 책상 열의 너비 조정
+                      child: _buildDeskColumn(_getWeekTexts(false), false),
+                    ),
+                    Spacer(flex: 1), // SizedBox 대신 Spacer 사용
                   ],
                 ),
               ),
             ],
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _overlayOpacity * 0.8, // 최대 불투명도를 높여 어둠의 범위 조절
+                duration: Duration(milliseconds: 300),
+                child: Container(
+                  color: Colors.black.withOpacity(_overlayOpacity * 0.6),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -336,61 +424,61 @@ class _ISeeYouDetailPageState extends State<ISeeYouDetailPage> {
   }
 
   Widget _buildDeskColumn(List<String>? texts, bool isLeftColumn) {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(5, (index) {
-          final text = texts?[index];
-          final isSelected = text == _selectedProjectName;
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Stack(
-              children: [
-                Image.asset('assets/images/desk.png'),
-                if (text != null)
-                  Positioned(
-                      bottom: 8,
-                      left: 16,
-                      child: MouseRegion(
-                        onEnter: (_) => setState(() {
-                          if (_selectedProjectName != text) {
-                            // 선택된 텍스트가 아닌 경우에만 호버 처리
-                            _hoveredProjectName = text;
-                          }
-                        }),
-                        onExit: (_) => setState(() {
-                          if (_selectedProjectName != text) {
-                            // 선택된 텍스트가 아닌 경우에만 호버 해제
-                            _hoveredProjectName = null;
-                          }
-                        }),
-                        child: GestureDetector(
-                          onTap: () => _onTextTap(text, isLeftColumn),
-                          child: Text(
-                            text,
-                            style: TextStyle(
-                              color: Color(0xFF595959),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              shadows: (text == _selectedProjectName ||
-                                      text == _hoveredProjectName)
-                                  ? [
-                                      Shadow(
-                                        blurRadius: 5.0,
-                                        color: Colors.black.withOpacity(0.5),
-                                        offset: Offset(0, 2),
-                                      )
-                                    ]
-                                  : [],
-                            ),
-                          ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(5, (index) {
+        final text = texts?[index];
+        final isSelected = text == _selectedProjectName;
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Stack(
+            children: [
+              Image.asset('assets/images/desk.png'),
+              if (text != null)
+                Positioned(
+                  bottom: 8,
+                  left: isLeftColumn ? 16 : null,
+                  right: isLeftColumn ? null : 16,
+                  child: MouseRegion(
+                    onEnter: (_) => setState(() {
+                      if (_selectedProjectName != text) {
+                        // 선택된 텍스트가 아닌 경우에만 호버 처리
+                        _hoveredProjectName = text;
+                      }
+                    }),
+                    onExit: (_) => setState(() {
+                      if (_selectedProjectName != text) {
+                        // 선택된 텍스트가 아닌 경우에만 호버 해제
+                        _hoveredProjectName = null;
+                      }
+                    }),
+                    child: GestureDetector(
+                      onTap: () => _onTextTap(text, isLeftColumn),
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          color: Color(0xFF595959),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          shadows: (text == _selectedProjectName ||
+                                  text == _hoveredProjectName)
+                              ? [
+                                  Shadow(
+                                    blurRadius: 5.0,
+                                    color: Colors.black.withOpacity(0.5),
+                                    offset: Offset(0, 2),
+                                  )
+                                ]
+                              : [],
                         ),
-                      )),
-              ],
-            ),
-          );
-        }),
-      ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
