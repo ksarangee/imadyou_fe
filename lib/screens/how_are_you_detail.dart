@@ -367,7 +367,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                 children: [
                   Image.asset(
                     'assets/images/how_tag.png',
-                    width: 170,
+                    width: 190,
                     height: 60,
                     fit: BoxFit.contain,
                   ),
@@ -417,7 +417,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                                 }
                               : null,
                           child: SizedBox(
-                            width: 60,
+                            width: 70,
                             child: Text(
                               entry.startDate.isEmpty ? "시작일" : entry.startDate,
                               style: TextStyle(
@@ -471,7 +471,7 @@ class _HowAreYouDetailPageState extends State<HowAreYouDetailPage>
                                 }
                               : null,
                           child: SizedBox(
-                            width: 60,
+                            width: 70,
                             child: Text(
                               entry.endDate.isEmpty ? "종료일" : entry.endDate,
                               style: TextStyle(
