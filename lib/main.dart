@@ -37,7 +37,7 @@ class GlobalAudioPlayer {
 
   static Future<void> playBackgroundMusic() async {
     try {
-      await player.setSource(AssetSource('audios/bg.mp3'));
+      await player.setSource(AssetSource('audios/bye.mp3'));
       await player.resume();
       isPlaying = true;
     } catch (e) {
