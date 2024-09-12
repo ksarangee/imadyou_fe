@@ -1,4 +1,6 @@
 # I Mad You
+<몰입캠프 우수작 선정>
+
 _그저 스쳐 지나가는 인연이 아닌, 서로를 오래 간직할 수 있도록_
 
 ### Outline
@@ -13,7 +15,7 @@ _그저 스쳐 지나가는 인연이 아닌, 서로를 오래 간직할 수 있
 ### Using Stack
 ----------
 - **Frontend**: Flutter
-- **Backend(server)**: Fastapi
+- **Backend(server)**: Fastapi  ( 백엔드 리포: [BE](https://github.com/silverttthin/IMadYou) )
 - **Database**: MongoDB
 - **IDE**: VS Code, Android Studio
 
